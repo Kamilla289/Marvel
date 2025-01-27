@@ -1,54 +1,87 @@
-import React, { useState, useEffect } from 'react';
-import './charList.scss';
-import MarvelService from '../../services/MarvelService';
+import { Component } from 'react';
 import Spinner from '../Spinner/Spinner';
+import ErrorMessage from '../errorMessage/ErrorMessage';
+import MarvelService from '../../services/MarvelService';
+import './charList.scss';
 
-const CharList = () => {
-    const [characters, setCharacters] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const marvelService = new MarvelService();
+class CharList extends Component {
 
-    const loadRandomCharacters = async () => {
-        setLoading(true);
-        const newCharacters = [];
-        for (let i = 0; i < 9; i++) {
-            const randomId = Math.floor(Math.random() * (1011400 - 1011000) + 1011000);
-            const character = await marvelService.getCharacter(randomId);
-            newCharacters.push(character);
-        }
-        setCharacters(prevCharacters => [...prevCharacters, ...newCharacters]);
-        setLoading(false);
-    };
+    state = {
+        charList: [],
+        loading: true,
+        error: false
+    }
 
-    useEffect(() => {
-        loadRandomCharacters();
-    }, []);
+    marvelService = new MarvelService();
 
-    return (
-        <div className="char__list">
-            {loading ? (
-                <Spinner />
-            ) : (
-                <>
-                    <ul className="char__grid">
-                        {characters.map((char, index) => (
-                            <li className="char__item" key={index}>
-                                <img
-                                    src={char.thumbnail}
-                                    alt={char.name}
-                                    style={{ objectFit: char.isImageAvailable ? 'contain' : 'cover' }}
-                                />
-                                <div className="char__name">{char.name}</div>
-                            </li>
-                        ))}
-                    </ul>
-                    <button className="button button__main button__long" onClick={loadRandomCharacters}>
-                        <div className="inner">load more</div>
-                    </button>
-                </>
-            )}
-        </div>
-    )
+    componentDidMount() {
+        this.marvelService.getAllCharacters()
+            .then(this.onCharListLoaded)
+            .catch(this.onError)
+    }
+
+    onCharListLoaded = (charList) => {
+        this.setState({
+            charList,
+            loading: false
+        })
+    }
+
+    onError = () => {
+        this.setState({
+            error: true,
+            loading: false
+        })
+    }
+
+    // Этот метод создан для оптимизации, 
+    // чтобы не помещать такую конструкцию в метод render
+    renderItems(arr) {
+        const items = arr.map((item) => {
+            let imgStyle = { 'objectFit': 'cover' };
+            if (item.thumbnail === 'http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg') {
+                imgStyle = { 'objectFit': 'unset' };
+            }
+
+            return (
+                <li
+                    className="char__item"
+                    key={item.id}
+                    onClick={() => this.props.onCharSelected(item.id)}>
+                    <img src={item.thumbnail} alt={item.name} style={imgStyle} />
+                    <div className="char__name">{item.name}</div>
+                </li>
+            )
+        });
+        // А эта конструкция вынесена для центровки спиннера/ошибки
+        return (
+            <ul className="char__grid">
+                {items}
+            </ul>
+        )
+    }
+
+    render() {
+
+        const { charList, loading, error } = this.state;
+
+        const items = this.renderItems(charList);
+
+        const errorMessage = error ? <ErrorMessage /> : null;
+        const spinner = loading ? <Spinner /> : null;
+        const content = !(loading || error) ? items : null;
+
+        return (
+            <div className="char__list">
+                {errorMessage}
+                {spinner}
+                {content}
+                <button className="button button__main button__long">
+                    <div className="inner">load more</div>
+                </button>
+            </div>
+        )
+    }
 }
 
 export default CharList;

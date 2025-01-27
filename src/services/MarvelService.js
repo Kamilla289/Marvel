@@ -23,23 +23,14 @@ class MarvelService {
   }
 
   _transformCharacter = (char) => {
-    const maxDescriptionLength = 200;
-    let description = char.description || "Данных о персонаже нет";
-
-    if (description.length > maxDescriptionLength) {
-      description = description.substring(0, maxDescriptionLength) + '...';
-    }
-
-    const thumbnailPath = char.thumbnail.path + '.' + char.thumbnail.extension;
-    const isImageAvailable = char.thumbnail.path.includes('image_not_available'); // Проверка на доступность изображения
-
     return {
+      id: char.id,
       name: char.name,
-      description: description,
-      thumbnail: thumbnailPath,
-      isImageAvailable: isImageAvailable, // Добавляем флаг
+      description: char.description ? `${char.description.slice(0, 210)}...` : 'There is no description for this character',
+      thumbnail: char.thumbnail.path + '.' + char.thumbnail.extension,
       homepage: char.urls[0].url,
-      wiki: char.urls[1].url
+      wiki: char.urls[1].url,
+      comics: char.comics.items
     }
   }
 }
