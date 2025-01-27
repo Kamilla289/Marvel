@@ -1,6 +1,7 @@
 class MarvelService {
   _apiBase = 'https://gateway.marvel.com:443/v1/public/';
   _apiKey = 'apikey=38ee0717cf7e2183132afbe8335fee2b';
+
   getResource = async (url) => {
     let res = await fetch(url);
 
@@ -29,10 +30,14 @@ class MarvelService {
       description = description.substring(0, maxDescriptionLength) + '...';
     }
 
+    const thumbnailPath = char.thumbnail.path + '.' + char.thumbnail.extension;
+    const isImageAvailable = char.thumbnail.path.includes('image_not_available'); // Проверка на доступность изображения
+
     return {
       name: char.name,
       description: description,
-      thumbnail: char.thumbnail.path + '.' + char.thumbnail.extension,
+      thumbnail: thumbnailPath,
+      isImageAvailable: isImageAvailable, // Добавляем флаг
       homepage: char.urls[0].url,
       wiki: char.urls[1].url
     }
