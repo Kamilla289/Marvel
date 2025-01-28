@@ -9,22 +9,43 @@ class CharList extends Component {
     state = {
         charList: [],
         loading: true,
-        error: false
+        error: false,
+        newItemLoading: false,
+        offset: 210,
+        charEnded: false,
     }
 
     marvelService = new MarvelService();
 
     componentDidMount() {
+        this.onRequest()
+    }
+
+    onRequest = (offset) => {
+        this.onCharListLoading();
         this.marvelService.getAllCharacters()
             .then(this.onCharListLoaded)
             .catch(this.onError)
     }
 
-    onCharListLoaded = (charList) => {
+    onCharListLoading = () => {
         this.setState({
-            charList,
-            loading: false
+            newItemLoading: true,
         })
+    }
+
+    onCharListLoaded = (newcharList) => {
+        let ended = false;
+        if (newcharList < 9) {
+            ended = true;
+        }
+        this.setState(({ charList, offset }) => ({
+            charList: [...charList, ...newcharList],
+            loading: false,
+            newItemLoading: false,
+            offset: offset + 210,
+            charEnded: ended,
+        }))
     }
 
     onError = () => {
@@ -63,7 +84,7 @@ class CharList extends Component {
 
     render() {
 
-        const { charList, loading, error } = this.state;
+        const { charList, loading, error, offset, newItemLoading, charEnded } = this.state;
 
         const items = this.renderItems(charList);
 
@@ -76,10 +97,14 @@ class CharList extends Component {
                 {errorMessage}
                 {spinner}
                 {content}
-                <button className="button button__main button__long">
+                <button
+                    className="button button__main button__long"
+                    disabled={newItemLoading}
+                    onClick={() => this.onRequest(offset)}
+                    style={{ 'display': charEnded ? 'none' : 'block' }}>
                     <div className="inner">load more</div>
                 </button>
-            </div>
+            </div >
         )
     }
 }
